@@ -13,6 +13,12 @@ dependencies = [
     "supervision",
     "roboflow",
     "inference",
+    "numpy",
+    "matplotlib",
+    "Pillow",
+    "scikit-learn",
+    "opencv-python",
+    "ipywidgets",
 ]
 
 [dependency-groups]
