@@ -143,8 +143,6 @@ data/**
 *.7z
 
 # ---- Trained models / checkpoints ----
-models/*
-!models/.gitkeep
 checkpoints/
 *.pt
 *.pth
@@ -184,3 +182,7 @@ desktop.ini
 
 /datasets
 /crops
+
+# ---- Un-ignore models directory and all its contents ----
+!models/
+!models/**
