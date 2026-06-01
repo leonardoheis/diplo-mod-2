@@ -15,7 +15,11 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import models
 from torchvision.models import MobileNet_V2_Weights
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device(
+    "cuda" if torch.cuda.is_available()
+    else "mps" if torch.backends.mps.is_available()
+    else "cpu"
+)
 
 
 class ShipDataset(Dataset):

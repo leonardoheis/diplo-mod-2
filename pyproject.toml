@@ -19,7 +19,6 @@ dependencies = [
     "scikit-learn",
     "opencv-python",
     "ipywidgets",
-    "tensorflow>=2.16",
 ]
 
 [dependency-groups]
@@ -89,11 +88,3 @@ check = ["lint", "typecheck"]
 precommit = "uv run pre-commit run --all-files --verbose"
 precommit-update = "uv run pre-commit run --hook-stage manual pre-commit-update"
 
-[tool.uv.sources]
-torch = { index = "pytorch-cu124" }
-torchvision = { index = "pytorch-cu124" }
-
-[[tool.uv.index]]
-name = "pytorch-cu124"
-url = "https://download.pytorch.org/whl/cu124"
-explicit = true
