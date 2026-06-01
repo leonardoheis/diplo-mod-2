@@ -58,10 +58,43 @@ ship_detection_local.ipynb      # YOLO11 training — v15 runs
 ship_detection_local_v2.ipynb   # YOLO11 training — v13 runs
 images/                         # Input satellite images
 crops/                          # Auto-cropped ship candidates (generated)
-models/                         # Saved PyTorch weights and ONNX export (generated)
+models/                         # Saved weights and ONNX exports (see table below)
 runs/                           # Ultralytics training outputs (generated)
 datasets/                       # ShipNet JSON + Roboflow annotated dataset
 pyproject.toml                  # Dependencies (managed with uv)
+```
+
+## Saved models
+
+All files live in `models/`. The table maps each file to the notebook cell that produces it.
+
+| File | Size | What it is | Notebook | Cell |
+|---|---|---|---|---|
+| `best_cnn.pth` | 6.8 MB | Best baseline CNN weights saved by early stopping | `satellite_ship_pipeline.ipynb` | **B.9** — Training loop |
+| `best_mobilenet_phase1.pth` | 9.0 MB | Best MobileNetV2 weights after head-only training | `satellite_ship_pipeline.ipynb` | **B.13** — Phase 1: train head only |
+| `best_mobilenet_phase2.pth` | 9.0 MB | Best MobileNetV2 weights after partial fine-tuning | `satellite_ship_pipeline.ipynb` | **B.14** — Phase 2: fine-tuning |
+| `mobilenet_ship.pth` | 9.5 MB | Final MobileNetV2 `state_dict` (use with `build_mobilenet()`) | `satellite_ship_pipeline.ipynb` | **B.19** — Export model |
+| `mobilenet_ship_full.pt` | 9.1 MB | Full MobileNetV2 object (`torch.save(model, ...)`) | `satellite_ship_pipeline.ipynb` | **B.19** — Export model |
+| `mobilenet_ship.onnx` | 9.2 MB | MobileNetV2 exported to ONNX (opset 12, dynamic batch) | `satellite_ship_pipeline.ipynb` | **B.19** — Export model |
+| `yolo11m.pt` | 38.8 MB | Ultralytics YOLO11m pretrained base model (cached to avoid re-download) | `ship_detection_local.ipynb` · `ship_detection_local_v2.ipynb` | config cell |
+| `yolo11n.pt` | 5.4 MB | Ultralytics YOLO11n pretrained base (downloaded automatically by Ultralytics AMP checks) | `ship_detection_local_v2.ipynb` | auto-downloaded |
+
+**Loading the final classifier:**
+
+```python
+import torch
+from satellite_ship_pipeline import build_mobilenet   # or copy the function from cell B.12
+
+model = build_mobilenet()
+model.load_state_dict(torch.load("models/mobilenet_ship.pth", map_location="cpu"))
+model.eval()
+```
+
+Or load the full object directly (no architecture code needed):
+
+```python
+model = torch.load("models/mobilenet_ship_full.pt", map_location="cpu")
+model.eval()
 ```
 
 ## Setup
