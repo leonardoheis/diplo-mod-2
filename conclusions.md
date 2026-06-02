@@ -134,7 +134,7 @@ Se realizaron tres corridas de entrenamiento variando hiperparámetros progresiv
 
 | Corrida | epochs | imgsz | cls | mosaic | degrees | Tiempo | mAP@50 (test) | Precision | Recall | Directorio de run | Mejor modelo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **v1** (baseline) | 30 | 640 | 0.5 | 1.0 | 30° | 0.621 h | 0.463 | 0.507 | 0.401 | `runs/detect/ship_detection_v13` | `weights/best.pt` |
+| **v1** (baseline) | 30 | 640 | 0.5 | 1.0 | 30° | 0.621 h | 0.463 | 0.507 | 0.401 | `runs/detect/ship_detection_v15` | `weights/best.pt` |
 | **v2** (+epochs, +cls) | 100 | 640 | 1.5 | 1.0 | 30° | 1.821 h | 0.616 | 0.748 | 0.468 | `runs/detect/ship_detection_v14` | `weights/best.pt` |
 | **v3** (+imgsz, −cls, tune aug) | 120 | 960 | 0.5 | 0.5 | 10° | 3.909 h | 0.611 | 0.748 | 0.469 | `runs/detect/ship_detection_v32` | `weights/best.pt` |
 
