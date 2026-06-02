@@ -24,43 +24,50 @@ Trains a binary classifier (ship / no-ship) on the [ShipNet](https://www.kaggle.
 4. Evaluates both models: confusion matrix, classification report, AUC-ROC, Grad-CAM heatmaps.
 5. Applies the trained classifier to the crops produced by Part A.
 
-**YOLO11 fine-tuning** (`ship_detection_local.ipynb`, `ship_detection_local_v2.ipynb`)
+**YOLO11 fine-tuning** (`ship_detection_local.ipynb`, `ship_detection_local_v2.ipynb`, `ship_detection_local_v3.ipynb`)
 
 Fine-tunes `yolo11m.pt` on a custom annotated dataset for bounding-box ship detection. Unlike Part A (which uses only OpenCV), this approach learns directly from labeled examples and produces confidence scores per detection.
 
-The pipeline in both notebooks is identical:
+The pipeline in all three notebooks is identical:
 
 1. Download the ShipNet image chips from Kaggle (80×80 px tiles, `1__*.png` = ship).
 2. Upload images to Roboflow and annotate bounding boxes (or use the Auto Label tool with Grounding DINO / SAM).
 3. Download the annotated dataset in YOLOv11 format.
-4. Fine-tune `yolo11m.pt` locally with satellite-specific augmentations (`degrees=30`, `flipud=0.5`, `mosaic=1.0`).
+4. Fine-tune `yolo11m.pt` locally with satellite-specific augmentations.
 5. Evaluate on the held-out test split (mAP@50, precision, recall).
 6. Run inference with a confidence threshold sweep to find the best operating point.
 
-**Why two notebooks?**
+**Why three notebooks?**
 
-They represent two successive training experiments with different stopping criteria:
+They represent three successive training experiments, each tuning a different set of hyperparameters:
 
-| Notebook | Title | `epochs` | `patience` | Intent |
-|---|---|---|---|---|
-| `ship_detection_local.ipynb` | v15 runs | 30 | 15 | Quick first pass — verify the pipeline works and establish a baseline |
-| `ship_detection_local_v2.ipynb` | v13 runs | 100 | 30 | Longer run — give the model more time to converge and confirm early stopping was genuinely triggered |
+| Notebook | Run dir | `epochs` | `imgsz` | `cls` | `mosaic` | `degrees` | Time | mAP@50 (test) |
+|---|---|---|---|---|---|---|---|---|
+| `ship_detection_local.ipynb` | `ship_detection_v13` | 30 | 640 | 0.5 | 1.0 | 30° | 0.621 h | 0.463 |
+| `ship_detection_local_v2.ipynb` | `ship_detection_v14` | 100 | 640 | 1.5 | 1.0 | 30° | 1.821 h | 0.616 |
+| `ship_detection_local_v3.ipynb` | `ship_detection_v32` | 120 | 960 | 0.5 | 0.5 | 10° | 3.909 h | 0.611 |
 
-The "v15 runs" / "v13 runs" suffix in the notebook titles is the number of training runs accumulated in `runs/detect/` across all sessions in that notebook (each `FORCE_RETRAIN = True` execution adds one numbered subfolder). It is a historical count, not a version of the model.
+All runs use `yolo11m.pt` pretrained on COCO, AdamW with cosine LR decay, `flipud=0.5`, `fliplr=0.5`, `patience=50`, and AutoBatch. Best weights for each run are saved under `runs/detect/<run_dir>/weights/best.pt`.
 
-`_local_v2` is the current reference notebook. `_local` is kept for comparison of the shorter-run results.
+`_local_v3` is the current reference notebook. v1 and v2 are kept for comparison across experiments.
 
 ## Repository structure
 
 ```
-satellite_ship_pipeline.ipynb   # Main notebook (Parts A + B)
-ship_detection_local.ipynb      # YOLO11 training — v15 runs
-ship_detection_local_v2.ipynb   # YOLO11 training — v13 runs
+satellite_ship_pipeline.ipynb   # Main notebook (Parts A + B — OpenCV + CNN/MobileNetV2)
+ship_detection_local.ipynb      # YOLO11 training — v1 (30 epochs, imgsz=640)
+ship_detection_local_v2.ipynb   # YOLO11 training — v2 (100 epochs, imgsz=640)
+ship_detection_local_v3.ipynb   # YOLO11 training — v3 (120 epochs, imgsz=960) ← current best
+conclusions.md                  # Final project report (TP Final Computer Vision)
 images/                         # Input satellite images
 crops/                          # Auto-cropped ship candidates (generated)
 models/                         # Saved weights and ONNX exports (see table below)
 runs/                           # Ultralytics training outputs (generated)
-datasets/                       # ShipNet JSON + Roboflow annotated dataset
+  └── detect/
+      ├── ship_detection_v13/   # v1 best weights
+      ├── ship_detection_v14/   # v2 best weights
+      └── ship_detection_v32/   # v3 best weights ← current best
+datasets/                       # ShipNet chips + Roboflow annotated dataset
 pyproject.toml                  # Dependencies (managed with uv)
 ```
 
@@ -127,7 +134,7 @@ B.2 requires a valid `kaggle.json` credentials file in the project root.
 
 ### YOLO11 fine-tuning
 
-Open `ship_detection_local.ipynb` and follow the cells. Requires a Roboflow API key stored in a `.env` file:
+Open `ship_detection_local_v3.ipynb` (current best, 120 epochs, imgsz=960) and follow the cells. Requires a Roboflow API key stored in a `.env` file:
 
 ```
 ROBOFLOW_API_KEY=your_key_here
