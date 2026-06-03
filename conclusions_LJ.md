@@ -1,7 +1,6 @@
 # Conclusiones Personales — Detección de Barcos en Imágenes Satelitales
 
-**Alumno:** Leandro Juárez  
-**Cátedra:** Computer Vision — Diplomatura en Inteligencia Artificial  
+**Alumno:** Leandro Juárez   
 **Fecha:** Junio 2026
 
 > Este documento complementa el informe grupal (`conclusions.md`) con la experiencia personal de ejecutar las notebooks del proyecto, incluyendo las iteraciones propias sobre la detección en escenas satelitales de la Bahía de San Francisco.
@@ -53,40 +52,19 @@ El slicing resolvió el problema de escala, pero no el de distribución de datos
 - Espuma y patrones de olas que generan texturas parecidas a los reflejos metálicos de los barcos.
 - Variaciones de iluminación distintas a las del dataset de entrenamiento.
 
-El modelo no fue entrenado con suficientes ejemplos negativos de estos casos particulares, por lo que no aprendió a distinguirlos con confianza. Para reducir los falsos positivos habría que incorporar chips de fondo específicos de SF Bay como ejemplos negativos durante el entrenamiento, o aumentar el umbral de confianza aceptando perder algunas detecciones reales.
+El modelo no fue entrenado con suficientes ejemplos negativos de estos casos particulares, por lo que no aprendió a distinguirlos con confianza. Para reducir los falsos positivos suponemos habría que incorporar chips de fondo específicos de SF Bay como ejemplos negativos durante el entrenamiento, o aumentar el umbral de confianza aceptando perder algunas detecciones reales.
 
 ---
 
-## 3. Notebook adaptada para macOS
-
-Dado que el entorno de trabajo principal es macOS con Apple Silicon, desarrollé la notebook `ship_detection_macos.ipynb` para poder ejecutar los pasos que no requieren GPU intensiva (exploración de datos, visualización, inferencia sobre pocas imágenes) sin depender de Colab.
-
-La notebook detecta automáticamente el acelerador disponible:
-- **MPS** (Apple Silicon) — más rápido que CPU, pero sin soporte para algunas operaciones de CUDA.
-- **CPU** — fallback para operaciones no soportadas por MPS.
-
-Las principales adaptaciones respecto a la versión de Colab:
-
-| Aspecto | Colab (GPU T4) | macOS (MPS/CPU) |
-|---|---|---|
-| Credenciales | Colab Secrets | Archivo `.env` local |
-| Batch size | 32 (CUDA) | 8 (MPS) / 4 (CPU) |
-| Acelerador | `cuda:0` | `mps` o `cpu` |
-| Tiempo de entrenamiento | ~15 min / 50 epochs | Inviable para >10 epochs |
-
-El entrenamiento completo en macOS es imprácticamente lento (sin GPU CUDA), por lo que la notebook está orientada a inferencia y exploración. Los pesos entrenados en Colab pueden cargarse localmente para inferencia sin problema.
-
----
-
-## 4. Reflexiones sobre el proceso
+## 3. Reflexiones sobre el proceso
 
 ### Lo que más impactó en los resultados
 
-El hallazgo más importante es que el **problema de escala** (no el modelo ni el dataset en sí) fue la causa principal de los resultados pobres en la primera versión. Con exactamente el mismo modelo entrenado, pasar de inferencia directa a inferencia con slicing transformó "cero detecciones" en "detecciones parciales con ruido". Esto confirma lo señalado en el informe grupal sobre SAHI como mejora de alto impacto.
+El hallazgo más importante es que el **problema de escala** (no el modelo ni el dataset en sí) fue la causa principal de los resultados pobres en la primera versión. Con exactamente el mismo modelo entrenado, pasar de inferencia directa a inferencia con slicing transformó "cero detecciones" en "detecciones parciales con ruido".
 
 ### La limitación de no tener GPU local
 
-Trabajar exclusivamente en Colab introduce fricciones reales: el entorno se reinicia si la sesión cae, los datasets hay que descargarlos cada vez (a menos que uses Google Drive como caché), y el tiempo de GPU disponible en la capa gratuita es limitado. Esto ralentizó las iteraciones y redujo la cantidad de experimentos que pude hacer. Una GPU local — aunque sea de gama media — habría permitido ciclos de experimentación mucho más rápidos.
+Trabajar exclusivamente en Colab introduce fricciones reales: el entorno se reinicia si la sesión cae, los datasets hay que descargarlos cada vez (se podría usar Google Drive como caché), y el tiempo de GPU disponible en la capa gratuita es limitado. Esto ralentizó las iteraciones y redujo la cantidad de experimentos que se hicieron. Una GPU local — aunque sea de gama media — habría permitido ciclos de experimentación mucho más rápidos.
 
 ### Qué haría diferente
 
@@ -97,13 +75,13 @@ Trabajar exclusivamente en Colab introduce fricciones reales: el entorno se rein
 
 ---
 
-## 5. Relación con las conclusiones grupales
+## 4. Relación con las conclusiones grupales
 
 El informe grupal identifica correctamente que *"aplicar SAHI es la mejora de mayor impacto para escenas de alta resolución"* (sección 6 de `conclusions.md`). La experiencia personal con las dos versiones de la notebook lo confirma de forma directa: fue exactamente ese cambio el que habilitó las primeras detecciones reales en SF Bay.
 
 También coincido con que *"el etiquetado es el cuello de botella"*. Los falsos positivos que persisten después del slicing no son un problema del modelo YOLO11 en sí, sino de la distribución del dataset de entrenamiento: los chips de ShipsNet son demasiado homogéneos y no representan la diversidad visual de una escena portuaria compleja.
 
-El recall bajo del modelo grupal (0.47 en el mejor experimento) y los falsos positivos observados en mis ejecuciones apuntan al mismo origen: **falta de diversidad en los datos de entrenamiento**, tanto en términos de negativos difíciles como de variedad de escenas y condiciones.
+El recall bajo del modelo grupal (0.47 en el mejor experimento) y los falsos positivos observados en estas ejecuciones apuntan al mismo origen: **falta de diversidad en los datos de entrenamiento**, tanto en términos de negativos difíciles como de variedad de escenas y condiciones.
 
 ---
 
