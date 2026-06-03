@@ -225,6 +225,47 @@ El barrido sobre 20 imágenes de test mostró que el número de detecciones cae 
 conf=0.40. Para vigilancia marítima, donde un falso negativo (barco no detectado) es más costoso que una falsa
 alarma, se recomienda operar con **conf=0.20–0.30**.
 
+### Inferencia sobre escenas satelitales completas *(Leandro Juárez)*
+
+Las evaluaciones del grupo se realizaron sobre chips del conjunto de test de Roboflow. Leandro Juárez extendió
+la evaluación ejecutando inferencia sobre **escenas completas de la Bahía de San Francisco** (~2500×1700 px)
+en Google Colab con GPU T4, lo que expuso un problema de escala no visible con los chips de test.
+
+**Problema de escala: chips de entrenamiento vs. escenas completas**
+
+El modelo fue entrenado con chips de 80×80 px donde el barco ocupa gran parte del encuadre. En una escena
+completa, un barco representa apenas 10–15 px de más de cuatro millones de píxeles totales. La red nunca vio
+objetos a esa proporción durante el entrenamiento, por lo que los ignora por completo.
+
+| Versión | Estrategia | Conf | Resultado en SF Bay |
+|---|---|---|---|
+| v1 — inferencia directa | Sin slicing | 0.25 | **0 detecciones** |
+| v2 — SAHI | Tiles 320×320 px, 20% overlap + NMS | 0.30 | Barcos detectados (con FP) |
+
+Aplicar SAHI transformó "cero detecciones" en detecciones reales con el mismo modelo, confirmando que el
+slicing es imprescindible para inferencia sobre imágenes de mayor resolución que los chips de entrenamiento.
+
+**Falsos positivos persistentes tras el slicing** *(Leandro Juárez)*
+
+Después de aplicar SAHI persistieron falsos positivos en zonas de espuma y patrones de olas (texturas
+similares a reflejos metálicos de cascos), estructuras portuarias con geometría rectangular (diques, grúas),
+y variaciones de iluminación de SF Bay no representadas en ShipsNet. La causa es la distribución homogénea del
+dataset: chips con barcos siempre centrados y fondos limpios, sin negativos difíciles de escenas portuarias
+complejas.
+
+**Entorno de ejecución y adaptación para macOS** *(Leandro Juárez)*
+
+Todas las corridas de Leandro se realizaron en Google Colab con GPU T4, dado que el entorno local es macOS con
+Apple Silicon. Para poder ejecutar exploración e inferencia sin depender de Colab se desarrolló
+`ship_detection_macos.ipynb`, que detecta automáticamente el acelerador (MPS o CPU) y ajusta el batch.
+
+| Aspecto | Colab (GPU T4) | macOS (MPS/CPU) |
+|---|---|---|
+| Acelerador | `cuda:0` | `mps` o `cpu` |
+| Batch size | 32 | 8 (MPS) / 4 (CPU) |
+| Credenciales | Colab Secrets | Archivo `.env` local |
+| Tiempo (50 epochs) | ~15 min | Inviable para >10 epochs |
+
 ---
 
 ## 5. Comparación de enfoques
@@ -275,7 +316,18 @@ lo que lo hace el más adecuado para una aplicación real de vigilancia satelita
 - **Anotar más imágenes.** Con ~1 500 imágenes de train, el modelo llega a un límite. Duplicar el dataset
   (≥ 3 000 train) es la mejora de mayor impacto esperado sobre el recall.
 - **Aplicar SAHI** (*Sliced Inference Handling*) para dividir imágenes de alta resolución en tiles solapados,
-  mejorando la detección de objetos pequeños sin aumentar la resolución de entrenamiento.
+  mejorando la detección de objetos pequeños sin aumentar la resolución de entrenamiento. *(Leandro Juárez
+  verificó esto empíricamente: pasar de inferencia directa a SAHI sobre escenas de SF Bay transformó 0
+  detecciones en detecciones reales con el mismo modelo entrenado.)*
+- **Incorporar negativos difíciles específicos del dominio de inferencia al entrenamiento.** *(Leandro Juárez)*
+  Los falsos positivos tras el slicing son consistentes: espuma, diques, grúas. Agregar chips negativos de
+  esas zonas al dataset atacaría el problema en la raíz sin necesidad de reentrenar desde cero.
+- **Usar Google Drive como caché permanente de datasets y pesos.** *(Leandro Juárez)* Trabajar en Colab
+  implica descargar datasets y pesos en cada sesión si no se persiste en Drive, lo que ralentiza las
+  iteraciones. Montar Drive como caché elimina esa fricción.
+- **Integrar SAHI desde el comienzo en la notebook principal.** *(Leandro Juárez)* Es fundamental para
+  cualquier escena de resolución mayor a los chips de entrenamiento; incorporarlo tardíamente demora el
+  descubrimiento del problema de escala.
 - **Revisar manualmente las anotaciones de Auto Label.** El ruido de supervisión generado por cajas imprecisas
   limitó la convergencia; una revisión de calidad habría mejorado el recall sin necesidad de más datos.
 - **Explorar `imgsz=1280` con `batch=1`** para evaluar si el trade-off resolución/batch favorece la detección
