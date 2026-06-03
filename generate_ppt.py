@@ -485,7 +485,7 @@ def slides_yolo(prs):
          OCEAN),
         ("Recall bajo (0.47) — el problema prioritario",
          "Para vigilancia marítima, perder un barco (falso negativo) es peor que una falsa alarma. "
-         "Se recomienda operar con conf=0.20–0.30 en lugar del default 0.50, "
+         "Se recomienda operar con conf=0.20 en lugar del default 0.25, "
          "sacrificando precisión para recuperar recall.",
          NAVY),
         ("Matriz de confusión",
@@ -608,7 +608,7 @@ def slides_conclusiones(prs):
          "pero batch cayó a 3 en una GPU de 8 GB. Ganancia marginal, costo alto.", TEAL),
         ("4", "El recall debe guiar todas las decisiones",
          "No detectar un barco es peor que una falsa alarma. "
-         "Operar con conf=0.20–0.30, no 0.50.", RED),
+         "Operar con conf=0.20, no el default 0.25.", RED),
         ("5", "El clásico falla por falta de contexto semántico",
          "Umbralización y morfología no pueden aprender qué es un barco. "
          "Solo capturan propiedades espectrales locales.", OCEAN),

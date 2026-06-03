@@ -94,7 +94,7 @@ La brecha entre mAP@50 (0.611) y mAP@50-95 (0.333) nos dice que el modelo **loca
 
 ### Por qué el recall (0.47) es el número que más nos preocupa
 
-Para vigilancia marítima, no detectar un barco real (falso negativo) es peor que una falsa alarma. Un barco de pesca ilegal que pasa desapercibido es un problema operativo; una falsa alarma es una verificación extra. Por eso operamos con `conf=0.20–0.30` en lugar del default de 0.50 — sacrificamos precisión para recuperar recall.
+Para vigilancia marítima, no detectar un barco real (falso negativo) es peor que una falsa alarma. Un barco de pesca ilegal que pasa desapercibido es un problema operativo; una falsa alarma es una verificación extra. Por eso operamos con `conf=0.20` en lugar del default de 0.25 — sacrificamos precisión para recuperar recall.
 
 ---
 
