@@ -21,12 +21,17 @@ The notebook `Copy_of_Copia_de_train_yolo11_object_detection_on_custom_dataset.i
 ## Commands
 
 ```bash
-# Run local entrypoint
-uv run python main.py
-
 # Install a new dependency
 uv add <package>
+
+# Lint + format check (run this after every code or notebook change)
+uv run poe check
 ```
+
+## Quality Gate
+
+**Always run `uv run poe check` after any change to Python files or notebooks.**
+If it reports files that would be reformatted, run `uv run ruff format .` to fix them, then re-run `uv run poe check` to confirm it passes before considering the task done.
 
 ## Key Configuration
 
