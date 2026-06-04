@@ -30,7 +30,14 @@ diferentes anotaciones, y se divide en train/valid/test.
 El dataset de ShipsNet se utilizó para subir a roboflow unas 300 imágenes positivas y anotarlas con bounding boxes 
 utilizando la herramienta Auto Label, para luego entrenar el modelo de YOLO11.
 
-### Composición y origen del dataset anotado
+### Composición y origen del dataset (OpenCV, CNN, MobileNetV2)
+
+El dataset para el detector clásico y los clasificadores de chips se extrajo del dataset ShipsNet de Kaggle, 
+que contiene 4000 chips de 80×80 px etiquetados a nivel de imagen como *ship* / *no ship*. 
+Se realizó un split 70/20/10 para train/valid/test, balanceando el número de imágenes positivas y 
+negativas en cada conjunto.
+
+### Composición y origen del dataset anotado (YOLOv11)
 
 El dataset utilizado para entrenar el modelo proviene de **Roboflow** (proyecto `ship-4jnj0-ku1a7`). Como
 punto de partida se seleccionaron 300 imágenes positivas del dataset **shipsnet de Kaggle** y se subieron a
