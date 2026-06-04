@@ -22,34 +22,35 @@ pruebas idóneo para comparar enfoques clásicos y basados en aprendizaje profun
 
 ### Origen
 
-Se utilizó el dataset **shipsnet** de Kaggle (`rhammell/ships-in-satellite-imagery`), compuesto por recortes
-(*chips*) de 80×80 px extraídos de imágenes del satélite Planet. El dataset original contiene 4 000 chips
-etiquetados a nivel de imagen (presencia/ausencia de barco), sin bounding boxes.
+Se utilizaron 2 datasets para diferentes propòsitos del proyecto:
+- **ShipsNet** (Kaggle): 4000 chips de 80×80. (`rhammell/ships-in-satellite-imagery`)
+- **Roboflow**: 2559 chips anotados con bounding boxes para entrenamiento de YOLO11.
+El dataset principal para entrenamiento de YOLO11 fue el de Roboflow, el cual toma cierta cantidad de imagenes con
+diferentes anotaciones, y se divide en train/valid/test. 
+El dataset de ShipsNet se utilizó para subir a roboflow unas 300 imágenes positivas y anotarlas con bounding boxes 
+utilizando la herramienta Auto Label, para luego entrenar el modelo de YOLO11.
 
-### Composición
+### Composición y origen del dataset anotado
 
-| Categoría | Imágenes |
-|---|---|
-| Chips con barco (label=1) | 1000 |
-| Chips sin barco (label=0) | 3000 |
-| **Total** | **4000** |
+El dataset utilizado para entrenar el modelo proviene de **Roboflow** (proyecto `ship-4jnj0-ku1a7`). Como
+punto de partida se seleccionaron 300 imágenes positivas del dataset **shipsnet de Kaggle** y se subieron a
+Roboflow, donde se anotaron con bounding boxes usando **Auto Label** (Grounding DINO / SAM). Las anotaciones
+automáticas fueron revisadas manualmente para corregir casos evidentes. Roboflow generó el split final y
+exportó el dataset en formato YOLOv11.
 
-Se subieron 300 imágenes de la categoría positiva a la plataforma **Roboflow** (proyecto `ship-4jnj0-ku1a7`) y se
-anotaron con bounding boxes utilizando la herramienta **Auto Label** basada en Grounding DINO / SAM. Las anotaciones
-fueron revisadas manualmente para corregir casos obvios.
-
-### División train / valid / test
-
-| Split | Imágenes | Bounding boxes |
+| Split | Imágenes | Anotaciones (ship) |
 |---|---|---|
 | Train | 1535 | 7488 |
 | Valid | 512 | 2606 |
 | Test | 512 | 2768 |
+| **Total** | **2559** | **12862** |
 
-La división 70/20/10 fue configurada automáticamente por Roboflow. Se justifica porque con ~2500 imágenes anotadas
+La división 60/20/20 fue configurada automáticamente por Roboflow. Se justifica porque con ~2500 imágenes anotadas
 es importante destinar suficiente volumen al entrenamiento, mientras que los conjuntos de validación y test son lo
 suficientemente grandes (512 imágenes c/u) para obtener métricas estables. El test set nunca fue visto durante el
 entrenamiento ni la selección de hiperparámetros.
+
+![Dataset Split](assets/dataset_split.png)
 
 ### Criterios de etiquetado y casos ambiguos
 
@@ -95,6 +96,8 @@ El detector clásico (`satellite_ship_pipeline.ipynb`) aplica la siguiente caden
   casi cuadrado (porque el largo del barco se reparte entre ancho y alto del rectángulo). El filtro de
   forma lo descarta pensando que no es un barco, aunque sí lo sea.
 
+![Comparación detector clásico v1 vs v2](assets/opencv_v1_vs_v2.png)
+
 **¿Por qué el enfoque clásico no es adecuado para este dominio?**
 Las imágenes satelitales presentan variabilidad fotométrica extrema (distintas horas del día, cobertura nubosa,
 profundidad del agua). Un conjunto fijo de parámetros de umbralización funciona bien en un subconjunto de
@@ -126,6 +129,8 @@ falsos negativos en vigilancia marítima.
 | F1-Score (ship) | 0.930 |
 | AUC-ROC | 0.9945 |
 
+![CNN Baseline — Learning curves](assets/cnn_learning_curves.png)
+
 #### MobileNetV2 con Transfer Learning (ImageNet)
 
 Entrenamiento en dos fases: primero solo el clasificador (*head*, 82 049 params entrenables), luego fine-tuning
@@ -138,6 +143,10 @@ de los últimos 5 bloques de features (1 763 393 params entrenables) con lr redu
 | Recall (ship) | 0.893 |
 | F1-Score (ship) | 0.927 |
 | AUC-ROC | 0.9933 |
+
+![MobileNetV2 — Phase 1 (head trained)](assets/mobilenet_phase1_curves.png)
+
+![MobileNetV2 — Phase 2 (fine-tuning)](assets/mobilenet_phase2_curves.png)
 
 #### Comparación CNN vs MobileNetV2
 
@@ -170,9 +179,9 @@ Se realizaron tres corridas de entrenamiento variando hiperparámetros progresiv
 
 | Corrida | epochs | imgsz | cls | mosaic | degrees | Tiempo | mAP@50 (test) | Precision | Recall | Directorio de run | Mejor modelo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **v1** (baseline) | 30 | 640 | 0.5 | 1.0 | 30° | 0.621 h | 0.463 | 0.507 | 0.401 | `runs/detect/ship_detection_v13` | `weights/best.pt` |
-| **v2** (+epochs, +cls) | 100 | 640 | 1.5 | 1.0 | 30° | 1.821 h | 0.616 | 0.748 | 0.468 | `runs/detect/ship_detection_v14` | `weights/best.pt` |
-| **v3** (+imgsz, −cls, tune aug) | 120 | 960 | 0.5 | 0.5 | 10° | 3.909 h | 0.611 | 0.748 | 0.469 | `runs/detect/ship_detection_v32` | `weights/best.pt` |
+| **v1** (baseline) | 30 | 640 | 0.5 | 1.0 | 30° | 0.621 h | 0.463 | 0.507 | 0.401 | [ship_detection_v15](https://drive.google.com/drive/folders/13tbZ-qTvA6d2RbKX94jk7WqH6TFr-qGx?usp=sharing) | `weights/best.pt` |
+| **v2** (+epochs, +cls) | 100 | 640 | 1.5 | 1.0 | 30° | 1.821 h | 0.616 | 0.748 | 0.468 | [ship_detection_v14](https://drive.google.com/drive/folders/1QLzTo6d1JXQ_SMTR4IFBsTHeHSLaPGlR?usp=sharing) | `weights/best.pt` |
+| **v3** (+imgsz, −cls, tune aug) | 120 | 960 | 0.5 | 0.5 | 10° | 3.909 h | 0.611 | 0.748 | 0.469 | [ship_detection_v32](https://drive.google.com/drive/folders/1adkPw0RD0CnFBkwTu4ewQQo4fZOfJbKN?usp=sharing) | `weights/best.pt` |
 
 Todos los experimentos usaron el modelo base `yolo11m.pt` (pretrained on COCO), optimizador AdamW con cosine LR
 decay, y el mismo dataset de Roboflow.
@@ -190,15 +199,15 @@ representación de barcos pequeños, pero la ganancia en mAP fue marginal (0.616
 a 3 imágenes (AutoBatch al 52% VRAM). Reducir `mosaic` de 1.0 a 0.5 y `degrees` de 30° a 10° moderó el ruido
 de augmentación para escenas de alta mar donde la orientación real de los barcos varía poco.
 
-### Métricas del mejor modelo (v3, evaluación en test set)
+### Métricas del mejor modelo (v2, evaluación en test set)
 
 | Métrica | Valor |
 |---|---|
-| mAP@50 | **0.611** |
-| mAP@50-95 | 0.333 |
+| mAP@50 | **0.616** |
+| mAP@50-95 | 0.339 |
 | Precisión | 0.748 |
-| Recall | 0.469 |
-| Velocidad de inferencia | 25.8 ms/imagen (GPU) |
+| Recall | 0.468 |
+| Velocidad de inferencia | 12.6 ms/imagen (GPU) |
 
 ### Interpretación de las curvas de entrenamiento
 
