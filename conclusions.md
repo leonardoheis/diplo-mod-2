@@ -314,8 +314,8 @@ lo que lo hace el más adecuado para una aplicación real de vigilancia satelita
 
 ### ¿Qué haríamos diferente?
 
-- **Anotar más imágenes.** Con ~1 500 imágenes de train, el modelo llega a un límite. Duplicar el dataset
-  (≥ 3 000 train) es la mejora de mayor impacto esperado sobre el recall.
+- **Anotar más imágenes.** Con ~1500 imágenes de train, el modelo llega a un límite. Duplicar el dataset
+  (≥ 3000 train) es la mejora de mayor impacto esperado sobre el recall.
 - **Aplicar SAHI** (*Sliced Inference Handling*) para dividir imágenes de alta resolución en tiles solapados,
   mejorando la detección de objetos pequeños sin aumentar la resolución de entrenamiento. *(Leandro Juárez
   verificó esto empíricamente: pasar de inferencia directa a SAHI sobre escenas de SF Bay transformó 0
@@ -326,9 +326,6 @@ lo que lo hace el más adecuado para una aplicación real de vigilancia satelita
 - **Usar Google Drive como caché permanente de datasets y pesos.** *(Leandro Juárez)* Trabajar en Colab
   implica descargar datasets y pesos en cada sesión si no se persiste en Drive, lo que ralentiza las
   iteraciones. Montar Drive como caché elimina esa fricción.
-- **Integrar SAHI desde el comienzo en la notebook principal.** *(Leandro Juárez)* Es fundamental para
-  cualquier escena de resolución mayor a los chips de entrenamiento; incorporarlo tardíamente demora el
-  descubrimiento del problema de escala.
 - **Revisar manualmente las anotaciones de Auto Label.** El ruido de supervisión generado por cajas imprecisas
   limitó la convergencia; una revisión de calidad habría mejorado el recall sin necesidad de más datos.
 - **Explorar `imgsz=1280` con `batch=1`** para evaluar si el trade-off resolución/batch favorece la detección
