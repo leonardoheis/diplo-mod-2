@@ -91,8 +91,9 @@ El detector clásico (`satellite_ship_pipeline.ipynb`) aplica la siguiente caden
 - Zonas portuarias con muchas estructuras: la morfología no puede distinguir siluetas de barcos de diques
   o grúas.
 - Barcos muy pequeños (< 10 px): quedan por debajo del umbral de área mínima.
-- Orientaciones diagonales: la relación de aspecto calculada sobre el bounding rect de OpenCV subestima
-  la elongación real.
+- Barcos en diagonal: cuando un barco está girado, el rectángulo que OpenCV dibuja alrededor suyo queda
+  casi cuadrado (porque el largo del barco se reparte entre ancho y alto del rectángulo). El filtro de
+  forma lo descarta pensando que no es un barco, aunque sí lo sea.
 
 **¿Por qué el enfoque clásico no es adecuado para este dominio?**
 Las imágenes satelitales presentan variabilidad fotométrica extrema (distintas horas del día, cobertura nubosa,
